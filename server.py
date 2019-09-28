@@ -18,7 +18,7 @@ async def handle_connection(reader, writer):
 
 async def main():
     server = await asyncio.start_server(handle_connection,
-        'localhost', 5054)
+        '25.58.122.144', 5054)
 
     async with server:
         await server.serve_forever()
