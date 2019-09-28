@@ -20,7 +20,6 @@ class Distributor:
             except asyncio.streams.IncompleteReadError:
                 break
 
-            print('received', raw)
             try:
                 data = json.loads(raw)
             except json.JSONDecodeError:
@@ -35,7 +34,6 @@ class Distributor:
 
             try:
                 player = self.players[player_id]
-                print('got', data['payload'], 'for', player_id)
                 await player.queue.put(data['payload'])
 
             except KeyError:
@@ -77,7 +75,6 @@ class PlayerSocket:
 
 class Player(PlayerSocket):
     def __init__(self, player_id: str, distributor: Distributor):
-        print('created player', player_id)
         super().__init__(player_id, distributor)
 
         loop = asyncio.get_event_loop()

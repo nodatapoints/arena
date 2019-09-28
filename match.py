@@ -5,7 +5,6 @@ from game import Game
 
 class Match:  # TODO inherit from Game
     def __init__(self, *players):
-        print('created match')
         self.players = players
         self.running = False
         self.end_event = asyncio.Event()
@@ -27,7 +26,6 @@ class Match:  # TODO inherit from Game
         while True:  # TODO timeout
             move = await self.get_move(player, was_invalid=was_invalid)
             if self.valid(player, move):
-                print(player.player_id, 'moved', move)
                 return move
 
             was_invalid = True
