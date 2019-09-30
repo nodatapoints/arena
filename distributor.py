@@ -17,27 +17,25 @@ class Distributor:
         while True:  # TODO proper loop
             try:
                 raw = await self.reader.readuntil()
-            except asyncio.streams.IncompleteReadError:
-                break
-
-            try:
                 data = json.loads(raw)
-            except json.JSONDecodeError:
-                raise  # Jaja funkt nicht und so TODO
 
-            if data['type'] == 'register':
-                await self.new_player_queue.put(data)
-                continue
+                if data['type'] == 'register':
+                    await self.new_player_queue.put(data)
+                    continue
 
-            player_id = data['id']
-            # TODO check for errors
-
-            try:
+                player_id = data['id']
+                # TODO check for errors
                 player = self.players[player_id]
                 await player.queue.put(data['payload'])
 
             except KeyError:
                 raise
+
+            except asyncio.streams.IncompleteReadError:
+                break
+
+            except json.JSONDecodeError:
+                raise  # Jaja funkt nicht und so TODO
 
     async def send(self, data: dict):
         raw = json.dumps(data).encode('ascii')
