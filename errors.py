@@ -1,4 +1,4 @@
-class BaseError(Exception):
+class ClientError(Exception):
     """Base error for every exception that will be transported to the client"""
     def __init__(self, exception: Exception=None, **kwargs):
         super().__init__(self.__class__.__doc__)
@@ -21,6 +21,6 @@ class BaseError(Exception):
             "additional_info": self.additional_args
         }
 
-class JSONSyntaxError(BaseError):
+class JSONSyntaxError(ClientError):
     """Invalid JSON Syntax"""
     code = 301
