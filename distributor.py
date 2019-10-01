@@ -1,7 +1,7 @@
 import asyncio
 import json
 
-from io import StringIO
+from errors import *
 
 class Distributor:
     def __init__(self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter):
@@ -13,29 +13,36 @@ class Distributor:
         self.listening_task = asyncio.create_task(self.listen())
         self.new_player_queue = asyncio.Queue()
 
+    async def handle_incoming_message(self):
+        try:
+            raw = await self.reader.readuntil()
+            data = json.loads(raw)
+
+            if data['type'] == 'register':
+                await self.new_player_queue.put(data)
+                return
+
+            player_id = data['id']
+            # TODO check for errors
+            player = self.players[player_id]
+            await player.queue.put(data['payload'])
+
+        except KeyError:
+            raise
+
+        except asyncio.streams.IncompleteReadError:
+            raise
+
+        except json.JSONDecodeError as e:
+            raise JSONSyntaxError(e)
+
     async def listen(self):
-        while True:  # TODO proper loop
+        while True:
             try:
-                raw = await self.reader.readuntil()
-                data = json.loads(raw)
+                await self.handle_incoming_message()
 
-                if data['type'] == 'register':
-                    await self.new_player_queue.put(data)
-                    continue
-
-                player_id = data['id']
-                # TODO check for errors
-                player = self.players[player_id]
-                await player.queue.put(data['payload'])
-
-            except KeyError:
-                raise
-
-            except asyncio.streams.IncompleteReadError:
-                break
-
-            except json.JSONDecodeError:
-                raise  # Jaja funkt nicht und so TODO
+            except ClientError as e:
+                await self.send(e.json)
 
     async def send(self, data: dict):
         raw = json.dumps(data).encode('ascii')
