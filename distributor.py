@@ -60,8 +60,12 @@ class Distributor:
 
 
 class PlayerSocket:
-    def __init__(self, player_id: str, distributor: Distributor):
-        self.player_id = player_id  # TODO rename to id
+    id = 0
+
+    def __init__(self, distributor: Distributor):
+        self.player_id = PlayerSocket.id  # TODO rename to id
+        PlayerSocket.id += 1
+
         self.distributor = distributor
         self.address = distributor.address  # spaghet
 
@@ -79,8 +83,8 @@ class PlayerSocket:
         return payload
 
 class Player(PlayerSocket):
-    def __init__(self, player_id: str, distributor: Distributor):
-        super().__init__(player_id, distributor)
+    def __init__(self, distributor: Distributor):
+        super().__init__(distributor)
 
         loop = asyncio.get_event_loop()
         self.matched_fut = loop.create_future()
