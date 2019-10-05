@@ -52,19 +52,18 @@ class Distributor:
     async def new_players(self):
         while True:
             request = await self.new_player_queue.get()
-            player_id = request['id']  # TODO assign yourself
-            player = Player(player_id, self)
-            self.players[player_id] = player
+            player = Party(self)
+            self.players[player.id] = player
             self.new_player_queue.task_done()
             yield player
 
 
-class PlayerSocket:
+class PartyProxy:
     id = 0
 
     def __init__(self, distributor: Distributor):
-        self.player_id = PlayerSocket.id  # TODO rename to id
-        PlayerSocket.id += 1
+        self.id = PartyProxy.id
+        PartyProxy.id += 1
 
         self.distributor = distributor
         self.address = distributor.address  # spaghet
@@ -73,8 +72,8 @@ class PlayerSocket:
 
     async def send(self, data: dict):  # TODO custom data class
         await self.distributor.send({
-            'id': self.player_id,
-            'data': data
+            'gameid': self.id,
+            **data
         })
 
     async def receive(self) -> dict:
@@ -82,7 +81,7 @@ class PlayerSocket:
         self.queue.task_done()
         return payload
 
-class Player(PlayerSocket):
+class Party(PartyProxy):
     def __init__(self, distributor: Distributor):
         super().__init__(distributor)
 
