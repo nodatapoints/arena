@@ -1,26 +1,32 @@
 #!/usr/bin/python3.7
 
 import asyncio
-from distributor import Distributor, Player
-from match import Matchmaker
+from arena.game import AlternatingGame
 
-mm = Matchmaker()
+class TestGame(AlternatingGame):
+    def __init__(self):
+        self._running = False
 
-async def handle_player(player):
-    match = await mm.get_match(player)
-    await match.carry_out()
+    def valid(self, player, move) -> bool:
+        return True
 
-async def handle_connection(reader, writer):
-    dist = Distributor(reader, writer)
+    @property
+    def running(self):
+        return self._running
 
-    async for player in dist.new_players():
-        asyncio.create_task(handle_player(player))
+    @property
+    def end_status(self):
+        return "blooop"
 
-async def main():
-    server = await asyncio.start_server(handle_connection,
-        '25.58.122.144', 5054)
+    def play(self):
+        self._running = True
+        for _ in range(5):
+            move = yield
+            print('got', move)
+            yield move
+            print('yielded', move)
 
-    async with server:
-        await server.serve_forever()
+        self._running = False
 
-asyncio.run(main())
+
+asyncio.run(TestGame.run_server('localhost'))
