@@ -8,20 +8,11 @@ __all__ = 'SynchronousGame', 'AlternatingGame'
 
 class Game(metaclass=ABCMeta):
     @abstractmethod
-    def __init__(self):
-        pass
-
-    @abstractmethod
     def valid(self, player, move) -> bool:
         pass
 
     @abstractmethod
     def play(self):
-        pass
-
-    @property
-    @abstractmethod
-    def running(self) -> bool:
         pass
 
     @property

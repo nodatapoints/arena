@@ -3,6 +3,7 @@ from .packet import *
 from . import PORT
 
 import socket
+from io import BytesIO
 
 BUFFER = 1024
 
@@ -14,8 +15,13 @@ def game_client(gen):
             server = address, PORT
             sock.connect(server)
 
+            fobj = sock.makefile('rb')
             def recv(pkg_class=None):
-                json = sock.recv(BUFFER)
+                json = fobj.readline()
+                if not json:
+                    return None
+                print(json)
+
                 if pkg_class is None:
                     return Packet.fromjson(json)
 
@@ -42,28 +48,28 @@ def game_client(gen):
 
             while True:
                 packet = recv()
+                if packet is None:
+                    break
+
                 if packet.typ is PacketType.END:
                     print('ended', packet.status)
-                    break
 
                 elif packet.typ is PacketType.ERROR:
                     print('error', packet)
-                    break
-
                 
                 elif packet.typ is PacketType.UPDATE:
                     move = client.send(packet.update)
                     next(client)
 
                 elif packet.typ is PacketType.GET:
-                    if move is None:
-                        breakpoint()
                     send(MovePacket(move))
 
                 else:
                     print('dont know what to do with', packet)
                     break
 
+        except:
+            raise
 
         finally:
             sock.close()

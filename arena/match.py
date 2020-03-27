@@ -35,6 +35,8 @@ class BasicMatch(metaclass=ABCMeta):
 
     async def broadcast(self, message, ignore_fail=False):
         await asyncio.gather(*(p.send(message, ignore_fail) for p in self.players))
+    async def send_to(self, player, message, ignore_fail=False):
+        await player.send(message, ignore_fail)
 
     @abstractmethod
     async def play(self):
@@ -54,12 +56,14 @@ class SynchronousMatch(BasicMatch):
 
         try:
             match_gen = self.game.play()
-            while self.game.running:
+            next(match_gen)
+            while True:
                 match_gen.send(await self.poll_moves())
                 update = next(match_gen)
     
                 await self.broadcast(update)
 
+        except StopIteration:
             await self.broadcast(EndPacket(self.game.end_status))
 
         except TerminalError as e:
@@ -78,16 +82,20 @@ class AlternatingMatch(BasicMatch):
 
         try:
             match_gen = self.game.play()
-            player_gen = cycle(self.players)
             next(match_gen)
-            while self.game.running:
+
+            player_gen = cycle(self.players)
+            player = next(player_gen)
+
+            while not self.end_event.is_set():
+                other = player
                 player = next(player_gen)
 
                 move = await self.poll_valid_move(player)
                 update = match_gen.send(move.move)
                 next(match_gen)
 
-                await self.broadcast(UpdatePacket(update))
+                await self.send_to(other, UpdatePacket(update))
                 
 
         except StopIteration:

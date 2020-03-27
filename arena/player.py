@@ -49,7 +49,7 @@ class Party:
             self.writer.write(raw)
             await self.writer.drain()
 
-        except ConnectionResetError:
+        except (ConnectionResetError, BrokenPipeError):
             if not ignore_fail:
                 raise ConnectionError
         
