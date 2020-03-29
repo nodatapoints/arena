@@ -20,7 +20,6 @@ def game_client(gen):
                 json = fobj.readline()
                 if not json:
                     return None
-                print(json)
 
                 if pkg_class is None:
                     return Packet.fromjson(json)

@@ -12,7 +12,12 @@ class Game(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def play(self):
+    def apply(self, player, move):
+        pass
+
+    @property
+    @abstractmethod
+    def running(self) -> bool:
         pass
 
     @property

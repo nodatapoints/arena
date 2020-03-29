@@ -8,7 +8,6 @@ class PacketType(Enum):
     SYNC = 'sync'
     SYNC_REPLY = 'sync.reply'
 
-    START = 'game.start'
     MOVE = 'game.move'
     GET = 'game.get'
     UPDATE = 'game.update'
@@ -152,6 +151,6 @@ class InvalidDataFormat(ClientErrorMessage):
     code = 304
 
 class UnknownKeyError(ClientErrorMessage):
-    """Invalid packet format"""
+    """Key not known"""
     code = 305
 

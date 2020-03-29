@@ -28,7 +28,7 @@ class BasicMatch(metaclass=ABCMeta):
         was_invalid = False
         while True:  # TODO timeout
             move = await self.get_move(player, was_invalid=was_invalid)
-            if self.game.valid(player, move):
+            if self.game.valid(player, move.move):
                 return move
 
             was_invalid = True
@@ -81,24 +81,18 @@ class AlternatingMatch(BasicMatch):
         self.running = True
 
         try:
-            match_gen = self.game.play()
-            next(match_gen)
-
             player_gen = cycle(self.players)
             player = next(player_gen)
 
-            while not self.end_event.is_set():
+            while self.game.running:
                 other = player
                 player = next(player_gen)
 
                 move = await self.poll_valid_move(player)
-                update = match_gen.send(move.move)
-                next(match_gen)
+                self.game.apply(player, move.move)
 
-                await self.send_to(other, UpdatePacket(update))
+                await self.send_to(other, UpdatePacket(move.move))
                 
-
-        except StopIteration:
             await self.broadcast(EndPacket(self.game.end_status), ignore_fail=True)
 
         except TerminalError as e:
