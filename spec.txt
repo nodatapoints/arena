@@ -53,7 +53,7 @@ GetMove packet from the server. The "repeat" flag will initially be
 false.
 
 GetMove:
-    { "type": "game.move", "repeat": [bool] }
+    { "type": "game.get", "repeat": [bool] }
 
 The client is expected to reply with a Move packet containing game
 specific data in the key "move"
