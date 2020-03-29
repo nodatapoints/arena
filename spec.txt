@@ -1,0 +1,138 @@
+Arena Client Protocol Specification v0.1
+
+0 General
+
+Arena provides an interface to perform an automated tournament of
+simple games over network communication: The tournament is hosted by a
+server program which handles all clients by arranging, supervising and
+communicate matches between clients. Each client program represents
+one player over the course of one match.
+
+
+1 Communication Communication with the server takes places via TCP on
+
+port 5054 and is split up into packets. Each packet contains a valid
+ascii-encoded JSON expression and is terminated with a newline
+(b'\n'). Note that newlines inside the encoded expressions _are not
+escaped_ and will result in an invalid syntax error.
+
+
+2 Packets
+
+A packet is represented by a JSON object with a mandatory
+"type" key that holds the packet type as a string. Currently all valid
+packet types are:
+    - sync         (client -> server)
+    - sync.reply   (server -> client)
+    - game.move    (client -> server)
+    - game.get     (server -> client)
+    - game.update  (server -> client)
+    - game.end     (server -> client)
+    - error        (server -> client)
+
+
+3 Game Progression
+
+After a connection was established the server awaits a sync packet
+from the client in the form of
+
+Sync:
+    { "type": "sync" }
+
+Once received, the server will answer this request with a SyncReply
+packet that contains a unique id for the client.
+
+SyncReply:
+    { "type": "sync.reply", "id": [int] }
+
+As soon as the server finds an available opponent it will arrange a
+match.
+
+When a it's a clients turn to make a move, it will be prompted by a
+GetMove packet from the server. The "repeat" flag will initially be
+false.
+
+GetMove:
+    { "type": "game.move", "repeat": [bool] }
+
+The client is expected to reply with a Move packet containing game
+specific data in the key "move"
+
+Move:
+    { "type": "game.move", "move": [Any] }
+
+If the server deems the move invalid, it will repeat its move request
+with the "repeat" flag set until a valid move is received. 
+
+When the opponent made a valid move, the server will forward it to the
+client in an Update packet containing game specific data in the
+"update" field.
+
+Update:
+    { "type": "game.update", "update": [Any] }
+
+When the game has ended both parties will be notified by an End packet
+containing the game result as a string in a "status" field.
+
+End:
+    { "type: "game.end", "status": [string] }
+
+Finally, both client connections will be closed and the match discarded.
+
+
+3.1 Alternating Matches
+
+In an alternating match the parties take turns. The match begins with
+an arbitrary party by sending a first GetMove request.
+
+
+3.2 Synchronous Matches
+
+    Not yet implemented.
+
+
+4 Errors
+
+A server will respond to erronious packets with an error packet
+containing a code, description and additional information.
+
+Error
+    { "type": "error", "code": [int], "description": [string],
+      "additional_args": [dict[string, string]] }
+
+If an error is _terminal_, it will stop the match immediately and
+disconnect the parties.
+
+Terminal Errors:
+    ConnectionError (100)
+        Catch-all for network-related issues.
+
+    InternalServerError (500)
+        make me depressed.
+
+    TimeoutError (101)
+        Not yet implemented.
+
+All other errors are non-terminal and allow the client to simply
+re-send its packet correctly.
+
+Non-terminal Errors:
+    JSONSyntaxError (301)
+        The JSON serialized data could not be decoded.
+
+    InvalidPacketType (302)
+        The packet type was either invalid or did not match the
+        expected type.
+
+    NoPacketTypeError (303)
+        There was no type specified.
+
+    InvalidDataFormat (304)
+        The JSON data did not contain an object.
+
+    UnknownKeyError (305)
+        There are either keys missing or keys that do not belong in
+        the packet.
+
+
+# vim:tw=70:ai 
