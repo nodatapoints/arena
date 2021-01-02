@@ -72,7 +72,7 @@ class Party:
             except ClientErrorMessage as e:
                 await self.send(e.packet)
 
-            except asyncio.streams.IncompleteReadError:
+            except asyncio.IncompleteReadError:
                 raise ConnectionError
 
     async def receive(self, parse_type: Type=None, timeout: float=None, ignore_timeout=False) -> Packet:
